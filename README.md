@@ -1,1 +1,1 @@
-# pyrosense-engine
+# firepulse-detection-engine
