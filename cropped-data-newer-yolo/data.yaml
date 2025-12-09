@@ -1,0 +1,6 @@
+names:
+  0: fire
+nc: 1
+path: /home/mblyweer/Bureau/5A/ProjetIntegrateur/satellite/cropped-data-newer-yolo
+train: /home/mblyweer/Bureau/5A/ProjetIntegrateur/satellite/cropped-data-newer-yolo/splits/train.txt
+val: /home/mblyweer/Bureau/5A/ProjetIntegrateur/satellite/cropped-data-newer-yolo/splits/val.txt
