@@ -1,0 +1,7 @@
+names:
+  0: fire
+nc: 1
+path: /home/mblyweer/Bureau/5A/ProjetIntegrateur/satellite/firepulse-detection-engine/dataset-yolo
+test: /home/mblyweer/Bureau/5A/ProjetIntegrateur/satellite/firepulse-detection-engine/dataset-yolo/splits/test.txt
+train: /home/mblyweer/Bureau/5A/ProjetIntegrateur/satellite/firepulse-detection-engine/dataset-yolo/splits/train.txt
+val: /home/mblyweer/Bureau/5A/ProjetIntegrateur/satellite/firepulse-detection-engine/dataset-yolo/splits/val.txt
