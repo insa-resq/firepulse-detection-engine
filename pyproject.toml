@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "firepulse-detection-engine"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "ultralytics==8.3.241",
+    "httpx==0.28.1",
+    "pydantic==2.12.5",
+    "pydantic-settings==2.12.0",
+    "python-dotenv==1.2.1",
+    "opencv-python==4.12.0.88",
+    "pillow==12.0.0",
+    "rasterio==1.4.4"
+]
+
+[project.optional-dependencies]
+detection = [
+    "fastapi[standard-no-fastapi-cloud-cli]==0.128.0",
+    "uvicorn[standard]==0.40.0",
+    "APScheduler==3.11.2"
+]
+training = [
+    "matplotlib==3.10.8",
+    "tqdm==4.67.1",
+    "numpy==2.2.6"
+]

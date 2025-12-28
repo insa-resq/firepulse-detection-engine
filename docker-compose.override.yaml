@@ -1,0 +1,6 @@
+name: firepulse-detection-engine-services-override
+
+services:
+  api-service:
+    image: firepulse-detection-engine-api-service
+    pull_policy: never

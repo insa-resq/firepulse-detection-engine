@@ -1,0 +1,35 @@
+name: firepulse-detection-engine-services
+
+services:
+  api-service:
+    image: ghcr.io/insa-resq/firepulse-detection-engine/api-service:${IMAGE_TAG:-latest}
+    pull_policy: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BEST_MODEL_VERSION: ${BEST_MODEL_VERSION:-v1}
+    container_name: firepulse-detection-engine-api-service
+    restart: always
+    init: true
+    deploy:
+      update_config:
+        failure_action: rollback
+    volumes:
+      - ./data/live:/data/live
+      - ./data/raw:/data/raw:ro
+    ports:
+      - '8000:8000'
+    networks:
+      - firepulse_detection_engine
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "-O-", "http://127.0.0.1:8000/health" ]
+      start_period: 10s
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+networks:
+  firepulse_detection_engine:
+    name: firepulse_detection_engine
+    driver: bridge

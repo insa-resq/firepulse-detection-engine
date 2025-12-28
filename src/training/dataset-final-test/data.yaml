@@ -1,0 +1,7 @@
+names:
+- fire
+nc: 1
+path: src/training/dataset-final-test
+test: images/test
+train: images/train
+val: images/val

@@ -1,0 +1,7 @@
+names:
+  0: fire
+nc: 1
+path: src/training/dataset-yolo
+test: splits/test.txt
+train: splits/train.txt
+val: splits/val.txt

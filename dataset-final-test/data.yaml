@@ -1,7 +1,0 @@
-names:
-- fire
-nc: 1
-path: /home/mblyweer/Bureau/5A/ProjetIntegrateur/satellite/firepulse-detection-engine/dataset-final-test
-test: images/test
-train: images/train
-val: images/val
