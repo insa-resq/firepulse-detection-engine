@@ -1,7 +1,6 @@
 FROM python:3.12-slim
 
 RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
     libglib2.0-0 \
     gdal-bin \
     libgdal-dev \
@@ -14,13 +13,13 @@ WORKDIR /app
 
 COPY pyproject.toml .
 
-RUN pip install --no-cache-dir ".[detection]"
+RUN pip install --no-cache-dir ".[production,detection]"
 
 COPY src/common ./src/common
 COPY src/detection ./src/detection
 
 ARG BEST_MODEL_VERSION
 
-COPY model/${BEST_MODEL_VERSION}/weights/best.pt ./model/${BEST_MODEL_VERSION}/weight/best.pt
+COPY model/${BEST_MODEL_VERSION}/weights/best.pt ./model/${BEST_MODEL_VERSION}/weights/best.pt
 
 CMD ["uvicorn", "src.detection.app:app", "--host", "0.0.0.0", "--port", "8000"]

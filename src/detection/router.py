@@ -1,10 +1,9 @@
 import os
 import shutil
 import uuid
-from typing import cast, Dict, TypedDict, Optional
+from typing import cast, Dict, TypedDict, Optional, Any
 
 from fastapi import APIRouter, UploadFile, File, HTTPException
-from python_multipart.decoders import SupportsWrite
 
 from src.common.config import settings
 from src.common.models import ImageSplit, ImageMetadata, ImageCreationDto, FireAlertCreationDto
@@ -42,7 +41,7 @@ async def detect_fire(file: UploadFile = File(...)) -> RunDetectionResponse:
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
     with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, cast(SupportsWrite, buffer))
+        shutil.copyfileobj(file.file, cast(Any, buffer))
 
     file_metadata = get_geotiff_metadata(file_path)
 

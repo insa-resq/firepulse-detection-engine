@@ -11,6 +11,12 @@ services:
         BEST_MODEL_VERSION: ${BEST_MODEL_VERSION:-v1}
     container_name: firepulse-detection-engine-api-service
     restart: always
+    environment:
+      - REMOTE_API_BASE_URL=${REMOTE_API_BASE_URL}
+      - REMOTE_API_EMAIL=${REMOTE_API_EMAIL}
+      - REMOTE_API_PASSWORD=${REMOTE_API_PASSWORD}
+      - IMAGES_SERVE_HOST=${IMAGES_SERVE_HOST}
+      - BEST_MODEL_VERSION=${BEST_MODEL_VERSION:-v1}
     init: true
     deploy:
       update_config:
