@@ -1,6 +1,7 @@
 import functools
 from datetime import datetime
 from enum import StrEnum
+from typing import List, Optional, Dict
 
 from pydantic import BaseModel, Field
 
@@ -8,6 +9,7 @@ class ImageSplit(StrEnum):
     TRAIN = "TRAIN"
     TEST = "TEST"
     VALIDATION = "VALIDATION"
+    NONE = "NONE"
 
 @functools.total_ordering
 class FireSeverity(StrEnum):
@@ -34,16 +36,17 @@ class FireStatus(StrEnum):
     DISMISSED = "DISMISSED"
 
 class ImageMetadata(BaseModel):
-    local_path: str
-    contains_fire: bool
+    localPath: str
+    width: int
+    height: int
     latitude: float
     longitude: float
+    boundingBoxes: List[List[float]]
 
 class ImageCreationDto(BaseModel):
     url: str
-    width: int
-    height: int
     split: ImageSplit
+    containsFire: bool
     metadata: ImageMetadata
 
 class ImageDto(BaseModel):
@@ -51,9 +54,8 @@ class ImageDto(BaseModel):
     createdAt: datetime
     updatedAt: datetime
     url: str
-    width: int
-    height: int
-    imageSplit: ImageSplit
+    split: ImageSplit
+    containsFire: bool
     metadata: ImageMetadata
 
 class FireAlertCreationDto(BaseModel):
@@ -75,3 +77,13 @@ class FireAlertDto(BaseModel):
     severity: FireSeverity
     status: FireStatus
     imageId: str
+
+class ImagesFilters(BaseModel):
+    splits: Optional[List[ImageSplit]] = None
+    containsFire: Optional[bool] = None
+
+    def as_dict(self) -> Dict[str, str]:
+        return self.model_dump(
+            exclude_unset=True,
+            exclude_none=True,
+        )

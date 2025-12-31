@@ -1,8 +1,9 @@
 import asyncio
 import logging
+import os
 import random
 
-from src.common.models import FireAlertCreationDto
+from src.common.models import FireAlertCreationDto, ImageDto, ImagesFilters, ImageSplit
 from src.common.remote_client import remote_client
 from src.detection.inference import detector
 
@@ -14,21 +15,20 @@ async def run_simulation_cycle() -> None:
     """
     logger.info("Starting simulation cycle...")
     try:
-        images = await remote_client.get_test_images()
+        candidate_images = await remote_client.get_images(
+            filters=ImagesFilters(splits=[ImageSplit.TEST], containsFire=True)
+        )
 
-        if not images:
+        if not candidate_images:
             logger.warning("No test images available for simulation.")
             return
 
-        candidate_images = list(filter(lambda image: image["metadata"]["contains_fire"], images))
+        selected_image: ImageDto = random.choice(candidate_images)
 
-        if not candidate_images:
-            logger.warning("No candidate images found for simulation.")
-            return
+        local_path = selected_image["metadata"]["localPath"]
+        absolute_file_path = os.path.abspath(local_path)
 
-        selected_image = random.choice(candidate_images)
-
-        detection_result = detector.detect(selected_image["local_path"])
+        detection_result = detector.detect([absolute_file_path])[0]
 
         if not detection_result["has_fire"]:
             logger.warning(

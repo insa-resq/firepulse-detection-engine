@@ -19,9 +19,9 @@ class Settings(BaseSettings):
     BEST_MODEL_VERSION: str = os.getenv("BEST_MODEL_VERSION")
     BEST_MODEL_WEIGHTS_PATH: str = f"{MODELS_DIR}/{BEST_MODEL_VERSION}/weights/best.pt"
 
-    RAW_IMAGES_PATH: str = "data/raw"
-    LIVE_IMAGES_PATH: str = "data/live"
-    PROCESSED_IMAGES_PATH: str = "data/processed/images"
+    RAW_IMAGES_DIR: str = "data/raw"
+    LIVE_IMAGES_DIR: str = "data/live"
+    PROCESSED_IMAGES_DIR: str = "data/processed"
 
     DATA_YAML_PATH: str = "src/training/data.yaml"
 

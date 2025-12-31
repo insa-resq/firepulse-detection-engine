@@ -6,6 +6,7 @@ from src.common.config import settings
 from src.common.models import ImageSplit, ImageMetadata, ImageCreationDto
 from src.common.remote_client import remote_client
 from src.common.utils import get_geotiff_metadata
+from src.detection.inference import detector
 
 
 def get_split_from_path(path: Path) -> ImageSplit:
@@ -18,24 +19,29 @@ def get_split_from_path(path: Path) -> ImageSplit:
 
 
 def get_images_to_sync() -> List[ImageCreationDto]:
-    base_path = Path(settings.PROCESSED_IMAGES_PATH)
+    base_path = Path(settings.PROCESSED_IMAGES_DIR)
     images_to_sync = []
 
     print(f"Scanning {base_path} for images...")
 
-    for file_path in base_path.rglob("*.tif"):
+    absolute_files_paths = [p.resolve() for p in base_path.rglob("*.tif")]
+
+    detection_results = detector.detect(absolute_files_paths)
+
+    for file_path, detection_result in zip(absolute_files_paths, detection_results):
         file_metadata = get_geotiff_metadata(file_path)
 
         image = ImageCreationDto(
             url=f"{settings.IMAGES_BASE_URL}/raw/{file_path.name}",
-            width=file_metadata["width"],
-            height=file_metadata["height"],
             split=get_split_from_path(file_path),
+            containsFire=detection_result["has_fire"],
             metadata=ImageMetadata(
-                local_path=str(file_path),
-                contains_fire=True,
+                localPath=str(file_path),
+                width=file_metadata["width"],
+                height=file_metadata["height"],
                 latitude=file_metadata["latitude"],
-                longitude=file_metadata["longitude"]
+                longitude=file_metadata["longitude"],
+                boundingBoxes=detection_result["bounding_boxes"]
             )
         )
 
