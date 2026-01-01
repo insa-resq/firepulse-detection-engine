@@ -3,7 +3,7 @@ from ultralytics import YOLO
 
 from src.common.config import settings
 
-model = YOLO(settings.BASE_MODEL_WEIGHTS_PATH)
+model = YOLO(settings.BASE_MODEL)
 
 results = model.train(
     data="src/training/dataset-final-test/data.yaml",
@@ -17,5 +17,4 @@ results = model.train(
     name="train"
 )
 
-model_name = os.path.basename(settings.BASE_MODEL_WEIGHTS_PATH)
-os.remove(model_name)
+os.remove(settings.BASE_MODEL)

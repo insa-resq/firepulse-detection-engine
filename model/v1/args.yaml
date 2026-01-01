@@ -1,6 +1,6 @@
 task: detect
 mode: train
-model: /home/ashborn/Dev/INSA/firepulse-detection-engine/model/base/yolo11n.pt
+model: model/base/yolo11n.pt
 data: src/training/data.yaml
 epochs: 30
 time: null

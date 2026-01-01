@@ -3,10 +3,9 @@ from typing import AsyncGenerator, Literal, TypedDict
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
 
 from src.common.config import settings
-from src.detection.router import router
+from src.detection.routers import detection_router, files_router
 from src.detection.simulation import simulation_job
 
 scheduler = BackgroundScheduler()
@@ -35,16 +34,6 @@ HealthCheckResponse = TypedDict("HealthCheckResponse", {"status": Literal["UP"]}
 def health() -> HealthCheckResponse:
     return {"status": "UP"}
 
-app.include_router(router, prefix="/api")
+app.include_router(detection_router.router)
 
-app.mount(
-    f"{settings.IMAGES_SERVE_BASE_PATH}/raw",
-    StaticFiles(directory=settings.RAW_IMAGES_DIR),
-    name="static_raw"
-)
-
-app.mount(
-    f"{settings.IMAGES_SERVE_BASE_PATH}/live",
-    StaticFiles(directory=settings.LIVE_IMAGES_DIR),
-    name="static_live"
-)
+app.include_router(files_router.router, prefix=settings.IMAGES_SERVE_BASE_PATH)

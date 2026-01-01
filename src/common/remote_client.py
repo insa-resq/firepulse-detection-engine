@@ -59,10 +59,9 @@ class RemoteClient:
         logger.info(f"Registering {len(payload)} images...")
         headers = await self._get_headers()
         async with httpx.AsyncClient() as client:
-            payload = {"images": payload}
             response = await client.post(
                 f"{self.base_url}/detection-service/images",
-                json=payload,
+                json={"images": [image.as_dict() for image in payload]},
                 headers=headers
             )
             response.raise_for_status()
@@ -72,12 +71,12 @@ class RemoteClient:
         """
         Registers a new fire alert.
         """
-        logger.info(f"Creating fire alert for image with ID {payload.image_id}...")
+        logger.info(f"Creating fire alert for image with ID {payload["imageId"]}...")
         headers = await self._get_headers()
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{self.base_url}/detection-service/fire-alerts",
-                json=payload,
+                json=payload.as_dict(),
                 headers=headers
             )
             response.raise_for_status()
@@ -107,6 +106,20 @@ class RemoteClient:
             data = response.json()
             self._images_cache[cache_key] = (time.time(), data)
             return data
+
+    async def delete_images(self, imageIds: List[str]) -> None:
+        """
+        Deletes images from the remote API.
+        """
+        headers = await self._get_headers()
+        async with httpx.AsyncClient() as client:
+            response = await client.delete(
+                f"{self.base_url}/detection-service/images",
+                params={"imageIds": imageIds},
+                headers=headers
+            )
+            response.raise_for_status()
+            return response.json()
 
 
 remote_client = RemoteClient()

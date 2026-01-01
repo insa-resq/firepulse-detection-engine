@@ -7,7 +7,7 @@ name = "firepulse-detection-engine"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
-    "ultralytics==8.3.243",
+    "ultralytics==8.3.245",
     "httpx==0.28.1",
     "pydantic==2.12.5",
     "pydantic-settings==2.12.0",

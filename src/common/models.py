@@ -41,13 +41,19 @@ class ImageMetadata(BaseModel):
     height: int
     latitude: float
     longitude: float
-    boundingBoxes: List[List[float]]
+    polygons: List[List[float]]
 
 class ImageCreationDto(BaseModel):
     url: str
     split: ImageSplit
     containsFire: bool
     metadata: ImageMetadata
+
+    def as_dict(self) -> Dict[str, str]:
+        return self.model_dump(
+            exclude_unset=True,
+            exclude_none=True,
+        )
 
 class ImageDto(BaseModel):
     id: str
@@ -65,6 +71,12 @@ class FireAlertCreationDto(BaseModel):
     longitude: float = Field(..., ge=-180.0, le=180.0)
     severity: FireSeverity
     imageId: str = Field(..., min_length=1)
+
+    def as_dict(self) -> Dict[str, str]:
+        return self.model_dump(
+            exclude_unset=True,
+            exclude_none=True,
+        )
 
 class FireAlertDto(BaseModel):
     id: int

@@ -5,14 +5,13 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-import rasterio
 from tqdm import tqdm
 
 from src.common.config import settings
+from src.common.utils import geotiff_to_jpg, get_geotiff_metadata
 
 
 SPLIT_RATIOS = { "train": 0.7, "val": 0.2, "test": 0.1 }
-BAND_MAP = { "I1": 0, "I2": 1, "I4": 3, "LABEL": 6 }
 SEED = 42
 
 
@@ -50,50 +49,44 @@ def create_raw_images(dataset_dir: Path, raw_images_dir: Path) -> None:
     print("Raw images created successfully.")
 
 
-def normalize_band(band):
-    """Normalize the 16-bit / float band to 0-255 uint8, handling NaNs."""
-    # 1. FIX: Replace NaNs with 0 before any calculation
-    band = np.nan_to_num(band, nan=0.0, posinf=0.0, neginf=0.0)
-
-    lower = np.percentile(band, 1)
-    upper = np.percentile(band, 99)
-
-    # Avoid division by zero if flat image
-    if upper == lower:
-        return np.zeros_like(band, dtype=np.uint8)
-
-    # Clip to remove outliers
-    band = np.clip(band, lower, upper)
-
-    # 2. Normalize and Safe Cast
-    normalized = ((band - lower) / (upper - lower) * 255.0)
-    return normalized.astype(np.uint8)
-
-
 def create_yolo_label(mask, img_width, img_height):
-    """Convert binary mask to YOLO bounding boxes."""
+    """Convert binary mask to YOLO Segmentation Polygons."""
+
+    # Retrieves external contours only
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     yolo_lines = []
 
     for cnt in contours:
-        if cv2.contourArea(cnt) < 2: continue
-        x, y, width, height = cv2.boundingRect(cnt)
+        # Filter noise (less than 2 pixels area)
+        if cv2.contourArea(cnt) < 2:
+            continue
 
-        # Normalize (0-1)
-        x_center = (x + width / 2) / img_width
-        y_center = (y + height / 2) / img_height
-        norm_w = width / img_width
-        norm_h = height / img_height
+        # Simplify contour slightly to reduce file size (optional but recommended)
+        # 0.005 is the epsilon factor - higher means more simplification
+        epsilon = 0.005 * cv2.arcLength(cnt, True)
+        approx = cv2.approxPolyDP(cnt, epsilon, True)
 
-        # Ensure values stay within [0, 1] (rare edge case with contours at the border)
-        x_center = min(max(x_center, 0), 1)
-        y_center = min(max(y_center, 0), 1)
-        norm_w = min(norm_w, 1)
-        norm_h = min(norm_h, 1)
+        # If simplification reduced it to a line or point, skip
+        if len(approx) < 3:
+            continue
 
-        yolo_lines.append(f"0 {x_center:.6f} {y_center:.6f} {norm_w:.6f} {norm_h:.6f}")
+        # Flatten the array: [[x1, y1], [x2, y2]] -> [x1, y1, x2, y2]
+        flattened = approx.flatten().astype(float)
+
+        # Normalize coordinates
+        # Even indices (0, 2, 4...) are X, Odd indices (1, 3, 5...) are Y
+        flattened[0::2] /= img_width
+        flattened[1::2] /= img_height
+
+        # Clamp values to [0, 1] to strictly avoid errors
+        flattened = np.clip(flattened, 0, 1)
+
+        # Format string
+        poly_str = " ".join([f"{coord:.6f}" for coord in flattened])
+        yolo_lines.append(f"0 {poly_str}")
 
     return yolo_lines
+
 
 if __name__ == "__main__":
     input_dir = Path(settings.RAW_IMAGES_DIR)
@@ -129,8 +122,16 @@ if __name__ == "__main__":
     print(f"Train size: {train_count} | Val size: {val_count} | Test size: {total_files - train_count - val_count}")
 
     for split_name in SPLIT_RATIOS.keys():
-        (output_dir / "images" / split_name).mkdir(parents=True, exist_ok=True)
-        (output_dir / "labels" / split_name).mkdir(parents=True, exist_ok=True)
+        split_images_dir = output_dir / "images" / split_name
+        split_labels_dir = output_dir / "labels" / split_name
+
+        split_images_dir.mkdir(parents=True, exist_ok=True)
+        split_labels_dir.mkdir(parents=True, exist_ok=True)
+
+        for existing_file in split_images_dir.rglob("*"):
+            existing_file.unlink()
+        for existing_file in split_labels_dir.rglob("*"):
+            existing_file.unlink()
 
     errors = []
     index = 0
@@ -144,42 +145,32 @@ if __name__ == "__main__":
             else:
                 split = "test"
 
-            with rasterio.open(tif_path) as src:
-                w, h = src.width, src.height
+            out_name = tif_path.stem
 
-                # Read Bands & Handle NaNs
-                r = src.read(BAND_MAP["I4"] + 1)
-                g = src.read(BAND_MAP["I2"] + 1)
-                b = src.read(BAND_MAP["I1"] + 1)
+            # Create and save the image
+            jpg_image = geotiff_to_jpg(image_path=tif_path)
+            cv2.imwrite(
+                str(output_dir / "images" / split / f"{out_name}.jpg"),
+                jpg_image
+            )
 
-                raw_mask = src.read(BAND_MAP["LABEL"] + 1)
-                clean_mask = np.nan_to_num(raw_mask, nan=0.0)
-                label_mask = clean_mask.astype(np.uint8)
+            metadata = get_geotiff_metadata(image_path=tif_path)
 
-                # Create Composite
-                img_merged = cv2.merge([
-                    normalize_band(b),
-                    normalize_band(g),
-                    normalize_band(r)
-                ])
+            # Generate Labels
+            raw_mask = metadata["bands"]["label"]
+            clean_mask = np.nan_to_num(raw_mask, nan=0.0)
+            label_mask = clean_mask.astype(np.uint8)
+            yolo_labels = create_yolo_label(label_mask, metadata["width"], metadata["height"])
 
-                # Generate Labels
-                yolo_labels = create_yolo_label(label_mask, w, h)
+            # Save Label
+            label_out_path = output_dir / "labels" / split / f"{out_name}.txt"
+            with open(label_out_path, "w") as f:
+                if yolo_labels:
+                    f.write("\n".join(yolo_labels))
 
-                # --- Save to Split Directory ---
-                out_name = tif_path.stem
-
-                # Save Image
-                img_out_path = output_dir / "images" / split / f"{out_name}.jpg"
-                cv2.imwrite(str(img_out_path), img_merged)
-
-                # Save Label
-                lbl_out_path = output_dir / "labels" / split / f"{out_name}.txt"
-                with open(lbl_out_path, "w") as f:
-                    if yolo_labels:
-                        f.write("\n".join(yolo_labels))
         except Exception as e:
             errors.append(f"Error processing {tif_path.name}: {e}")
+
         index += 1
 
     print("Dataset processed successfully.")

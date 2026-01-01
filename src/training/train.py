@@ -1,3 +1,4 @@
+import glob
 import os
 from typing import Dict, Any
 
@@ -9,7 +10,6 @@ def get_new_version_name() -> str:
     previous_versions = [
         folder_name
         for folder_name in os.listdir(settings.MODELS_DIR)
-        if folder_name != "base"
     ]
 
     for version in previous_versions:
@@ -28,11 +28,12 @@ def get_new_version_name() -> str:
 
 
 def train_model(version: str) -> Dict[str, Any]:
-    model = YOLO(settings.BASE_MODEL_WEIGHTS_PATH)
+    model = YOLO(settings.BASE_MODEL)
     return model.train(
         data=settings.DATA_YAML_PATH,
-        epochs=30,
-        imgsz=640,
+        task="segment",
+        epochs=100,
+        imgsz=608, # First multiple of 32 greater than 595
         device=0,
         batch=8,
         patience=10,
@@ -43,8 +44,9 @@ def train_model(version: str) -> Dict[str, Any]:
 
 
 def cleanup() -> None:
-    base_model_name = os.path.basename(settings.BASE_MODEL_WEIGHTS_PATH)
-    os.remove(base_model_name)
+    for weights_file in glob.glob("yolo*.pt"):
+        os.remove(weights_file)
+
 
 if __name__ == "__main__":
     version_name = get_new_version_name()

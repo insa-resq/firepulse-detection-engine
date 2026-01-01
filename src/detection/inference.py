@@ -2,19 +2,22 @@ import os
 import logging
 from typing import List, TypedDict, Optional
 
+import cv2
+import numpy as np
 from ultralytics import YOLO
 
 from src.common.config import settings
 from src.common.models import FireSeverity
+from src.common.utils import geotiff_to_jpg
 
-BoundingBox = List[float]
+Polygon = List[float]
 DetectionResultItem = TypedDict(
     "DetectionResultItem",
     {
         "has_fire": bool,
         "confidence": Optional[float],
         "severity": Optional[FireSeverity],
-        "bounding_boxes": List[BoundingBox]
+        "polygons": List[Polygon]
     }
 )
 DetectionResult = List[DetectionResultItem]
@@ -35,10 +38,18 @@ class FireDetector:
             if not os.path.exists(image_path):
                 raise FileNotFoundError(f"Image {image_path} does not exist!")
 
+        logger.info("Converting GeoTIFF images to JPEG format for inference...")
+
+        jpg_images = [
+            geotiff_to_jpg(image_path)
+            for image_path in images_paths
+        ]
+
         logger.info(f"Running inference on {len(images_paths)} image(s)...")
 
         results = self.model.predict(
-            source=images_paths,
+            source=jpg_images,
+            task="segment",
             conf=settings.CONFIDENCE_THRESHOLD,
             save=False,
             verbose=False
@@ -50,60 +61,72 @@ class FireDetector:
 
         for result in results:
             # Negative result
-            if len(result.boxes) == 0:
+            if result.masks is None:
                 all_results.append({
                     "has_fire": False,
                     "confidence": None,
                     "severity": None,
-                    "bounding_boxes": []
+                    "polygons": []
                 })
                 continue
 
             max_confidence = 0.0
             worst_severity = FireSeverity.LOW
-            all_boxes = []
+            all_polygons = []
 
             # Image dimensions for relative area calculation
             # result.orig_shape is (height, width)
             img_height, img_width = result.orig_shape
             img_area = img_height * img_width
 
-            for box in result.boxes:
-                # 1. Extract confidence
-                confidence = float(box.conf[0])
-                if confidence > max_confidence:
-                    max_confidence = confidence
+            for i, confidence_tensor in enumerate(result.boxes.conf):
+                confidence = float(confidence_tensor)
+                max_confidence = max(max_confidence, confidence)
 
-                # 2. Extract bounding box formatted as (x_center, y_center, width, height) to easily calculate the area
-                x, y, w, h = box.xywh[0].tolist()
-                all_boxes.append([x, y, w, h])
+                # Get normalized polygon (List of [x, y])
+                # result.masks.xyn is a list of arrays
+                poly_norm = result.masks.xyn[i]
 
-                # 3. Calculate the severity for this specific fire
-                box_area = w * h
-                severity = self._calculate_severity(confidence, box_area, img_area)
+                # Convert to a flat list for the API [x1, y1, x2, y2...]
+                flat_poly = poly_norm.flatten().tolist()
+                all_polygons.append(flat_poly)
 
-                if severity > worst_severity:
-                    worst_severity = severity
+                # Calculate Exact Fire Area
+                # We can use the Polygon area formula (Shoelace formula)
+                # or approximate using the mask object if needed.
+                # Ultralytics masks have a .data attribute (bitmap), but xyn is faster.
+
+                # Simple approach: Denormalize and calculate area using OpenCV
+                # (poly_norm * [w, h])
+                denorm_poly = (poly_norm * np.array([img_width, img_height])).astype(np.float32)
+
+                # cv2.contourArea requires float32/int
+                fire_area = cv2.contourArea(denorm_poly)
+
+                # Recalculate severity with the exact area
+                current_severity = self._calculate_severity(confidence, fire_area, img_area)
+                if current_severity > worst_severity:
+                    worst_severity = current_severity
 
             all_results.append({
                 "has_fire": True,
                 "confidence": max_confidence,
                 "severity": worst_severity,
-                "bounding_boxes": all_boxes
+                "polygons": all_polygons
             })
 
         return all_results
 
     @staticmethod
-    def _calculate_severity(confidence: float, box_area: float, img_area: float) -> FireSeverity:
+    def _calculate_severity(confidence: float, fire_area: float, img_area: float) -> FireSeverity:
         """
         Determines severity based on:
         1. Area ratio: How much of the image is burning?
         2. Confidence: How sure is the model?
         """
-        area_ratio = box_area / img_area
+        area_ratio = fire_area / img_area
 
-        if area_ratio > 0.10 and confidence > 0.7:
+        if area_ratio > 0.05 and confidence > 0.7:
             return FireSeverity.CRITICAL
 
         if area_ratio > 0.02:
