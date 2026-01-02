@@ -1,0 +1,11 @@
+__pycache__
+*.pyc
+.git
+venv/
+.venv/
+data/
+src/training
+*.egg-info
+.env*
+LICENSE
+README.md

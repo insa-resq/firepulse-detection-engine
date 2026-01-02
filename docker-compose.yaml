@@ -8,7 +8,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        BEST_MODEL_VERSION: ${BEST_MODEL_VERSION:-v4}
+        BEST_MODEL_VERSION: ${BEST_MODEL_VERSION}
     container_name: firepulse-detection-engine-api-service
     restart: always
     environment:
@@ -16,7 +16,7 @@ services:
       - REMOTE_API_EMAIL=${REMOTE_API_EMAIL}
       - REMOTE_API_PASSWORD=${REMOTE_API_PASSWORD}
       - IMAGES_SERVE_HOST=${IMAGES_SERVE_HOST}
-      - BEST_MODEL_VERSION=${BEST_MODEL_VERSION:-v4}
+      - BEST_MODEL_VERSION=${BEST_MODEL_VERSION}
     init: true
     deploy:
       update_config:
@@ -29,7 +29,7 @@ services:
     networks:
       - firepulse_detection_engine
     healthcheck:
-      test: [ "CMD", "wget", "-q", "-O-", "http://127.0.0.1:8000/health" ]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
       start_period: 10s
       interval: 30s
       timeout: 10s
