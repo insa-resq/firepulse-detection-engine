@@ -43,7 +43,7 @@ jobs:
               - 'data/**'
               - 'model/**'
               - 'src/common/**'
-              - 'src/detection/**
+              - 'src/detection/**'
               - pyproject.toml
               - .env.ci
               - Dockerfile
