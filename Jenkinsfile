@@ -55,9 +55,9 @@ pipeline {
                                     cd ${DEPLOYMENT_DIRECTORY}
                                     export IMAGE_TAG=${IMAGE_TAG}
                                     echo "Pulling updated image for service..."
-                                    docker compose pull web-service
+                                    docker compose pull api-service
                                     echo "Starting service..."
-                                    docker compose up -d web-service --wait
+                                    docker compose up -d api-service --wait
                                     echo "Service deployed successfully!"
                                 '
                             """
