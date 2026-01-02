@@ -16,8 +16,7 @@ class Settings(BaseSettings):
 
     MODELS_DIR: str = "model"
     BASE_MODEL: str = "yolo11n-seg.pt"
-    BEST_MODEL_VERSION: str = os.getenv("BEST_MODEL_VERSION")
-    BEST_MODEL_WEIGHTS_PATH: str = f"{MODELS_DIR}/{BEST_MODEL_VERSION}/weights/best.pt"
+    BEST_MODEL_WEIGHTS_PATH: str = f"{MODELS_DIR}/v4/weights/best.pt"
 
     RAW_IMAGES_DIR: str = "data/raw"
     LIVE_IMAGES_DIR: str = "data/live"
@@ -25,9 +24,8 @@ class Settings(BaseSettings):
 
     DATA_YAML_PATH: str = "src/training/data.yaml"
 
-    IMAGES_SERVE_HOST: str = os.getenv("IMAGES_SERVE_HOST")
     IMAGES_SERVE_BASE_PATH: str = "/files"
-    IMAGES_SERVE_BASE_URL: str = f"{IMAGES_SERVE_HOST}{IMAGES_SERVE_BASE_PATH}"
+    REMOTE_IMAGES_SERVE_BASE_URL: str = os.getenv("REMOTE_IMAGES_SERVE_BASE_URL")
 
     CONFIDENCE_THRESHOLD: float = 0.5
 

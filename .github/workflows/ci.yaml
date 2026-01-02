@@ -1,0 +1,145 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SERVICE_NAME: api-service
+  IMAGE_NAME: ghcr.io/insa-resq/firepulse-detection-engine/api-service
+  IMAGE_PRIMARY_TAG: latest
+  IMAGE_SECONDARY_TAG: ${{ github.sha }}
+
+jobs:
+  detect-changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      any_change: ${{ steps.changes.outputs.any_change }}
+      deploy_only: ${{ steps.changes.outputs.deploy_only }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.1
+
+      - name: Detect changed services
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            ci-pipeline:
+              - .github/workflows/ci.yaml
+            cd-pipeline:
+              - Jenkinsfile
+            api-service:
+              - 'data/**'
+              - 'model/**'
+              - 'src/common/**'
+              - 'src/detection/**
+              - pyproject.toml
+              - .env.ci
+              - Dockerfile
+              - docker-compose.yaml
+              - .dockerignore
+
+      - name: Set changed services output
+        id: changes
+        run: |
+          if [ "${{ steps.filter.outputs.api-service }}" = 'true' ] || [ "${{ steps.filter.outputs.ci-pipeline }}" = 'true' ]; then
+            echo "Changes detected."
+            echo "any_change=true" >> $GITHUB_OUTPUT
+            echo "deploy_only=false" >> $GITHUB_OUTPUT
+          elif [ "${{ steps.filter.outputs.cd-pipeline }}" = 'true' ]; then
+            echo "CD pipeline only changed."
+            echo "any_change=false" >> $GITHUB_OUTPUT
+            echo "deploy_only=true" >> $GITHUB_OUTPUT
+          else
+            echo "No relevant changes detected."
+            echo "any_change=false" >> $GITHUB_OUTPUT
+            echo "deploy_only=false" >> $GITHUB_OUTPUT
+          fi
+
+  build:
+    name: Build image
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.any_change == 'true' && needs.detect-changes.outputs.deploy_only == 'false' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.1
+
+      - name: Set up environment
+        run: |
+          cp .env.ci .env
+          echo "IMAGE_TAG=${{ env.IMAGE_SECONDARY_TAG }}" >> .env
+
+      - name: Build the Docker image
+        run: |
+          docker compose -f docker-compose.yaml build ${{ env.SERVICE_NAME }}
+          docker images
+
+      - name: Save Docker image
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: docker save ${{ env.IMAGE_NAME }}:${{ env.IMAGE_SECONDARY_TAG }} -o ${{ runner.temp }}/${{ env.SERVICE_NAME }}.tar
+
+      - name: Upload the image artifact to GitHub Actions
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: ${{ env.SERVICE_NAME }}-docker-image
+          path: ${{ runner.temp }}/${{ env.SERVICE_NAME }}.tar
+          retention-days: 1
+
+      - name: Clean up environment
+        if: always()
+        run: rm -f .env
+
+  push:
+    name: Push image
+    needs: [detect-changes, build]
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Download image artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: ${{ env.SERVICE_NAME }}-docker-image
+          path: ${{ runner.temp }}
+
+      - name: Load Docker image
+        run: docker load -i ${{ runner.temp }}/${{ env.SERVICE_NAME }}.tar
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag and push image
+        run: |
+          docker tag ${{ env.IMAGE_NAME }}:${{ env.IMAGE_SECONDARY_TAG }} ${{ env.IMAGE_NAME }}:${{ env.IMAGE_PRIMARY_TAG }}
+          docker push ${{ env.IMAGE_NAME }}:${{ env.IMAGE_SECONDARY_TAG }}
+          docker push ${{ env.IMAGE_NAME }}:${{ env.IMAGE_PRIMARY_TAG }}
+
+  deploy:
+    name: Trigger deployment
+    needs: [detect-changes, push]
+    if: ${{ always() && needs.detect-changes.result == 'success' && (needs.push.result == 'success' || needs.detect-changes.outputs.deploy_only == 'true') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Jenkins deployment via webhook
+        run: |
+          curl --fail -X POST "${{ secrets.JENKINS_URL }}/job/firepulse-detection-engine-deployment/build" \
+            --user "${{ secrets.JENKINS_USER }}:${{ secrets.JENKINS_TOKEN }}"

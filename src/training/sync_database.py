@@ -44,7 +44,7 @@ def get_images_to_sync() -> List[ImageCreationDto]:
         file_metadata = get_geotiff_metadata(image_path=tif_file_path)
 
         image = ImageCreationDto(
-            url=f"{settings.IMAGES_SERVE_BASE_URL}/raw/{tif_file_path.stem}",
+            url=f"{settings.REMOTE_IMAGES_SERVE_BASE_URL}/raw/{tif_file_path.stem}",
             split=get_split_from_path(tif_file_path),
             containsFire=detection_result["has_fire"],
             metadata=ImageMetadata(

@@ -35,7 +35,6 @@ ENV YOLO_CONFIG_DIR="/tmp"
 COPY src/common ./src/common
 COPY src/detection ./src/detection
 
-ARG BEST_MODEL_VERSION
-COPY model/${BEST_MODEL_VERSION}/weights/best.pt ./model/${BEST_MODEL_VERSION}/weights/best.pt
+COPY model/v4/weights/best.pt ./model/v4/weights/best.pt
 
 CMD ["uvicorn", "src.detection.app:app", "--host", "0.0.0.0", "--port", "8000"]

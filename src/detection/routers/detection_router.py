@@ -58,7 +58,7 @@ async def detect_fire(file: UploadFile = File(...)) -> RunDetectionResponse:
 
     try:
         image = ImageCreationDto(
-            url=f"{settings.IMAGES_BASE_URL}/live/{file_id}",
+            url=f"{settings.REMOTE_IMAGES_SERVE_BASE_URL}/live/{file_id}",
             split=ImageSplit.NONE,
             containsFire=detection_result["has_fire"],
             metadata=ImageMetadata(
