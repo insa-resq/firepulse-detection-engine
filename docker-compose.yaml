@@ -19,8 +19,8 @@ services:
       update_config:
         failure_action: rollback
     volumes:
-      - ./data/live:/data/live
-      - ./data/raw:/data/raw:ro
+      - ./data/live:/app/data/live
+      - ./data/raw:/app/data/raw:ro
     ports:
       - '8000:8000'
     networks:
