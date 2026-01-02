@@ -8,7 +8,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        BEST_MODEL_VERSION: ${BEST_MODEL_VERSION:-v1}
+        BEST_MODEL_VERSION: ${BEST_MODEL_VERSION:-v4}
     container_name: firepulse-detection-engine-api-service
     restart: always
     environment:
@@ -16,7 +16,7 @@ services:
       - REMOTE_API_EMAIL=${REMOTE_API_EMAIL}
       - REMOTE_API_PASSWORD=${REMOTE_API_PASSWORD}
       - IMAGES_SERVE_HOST=${IMAGES_SERVE_HOST}
-      - BEST_MODEL_VERSION=${BEST_MODEL_VERSION:-v1}
+      - BEST_MODEL_VERSION=${BEST_MODEL_VERSION:-v4}
     init: true
     deploy:
       update_config:

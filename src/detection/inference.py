@@ -75,7 +75,6 @@ class FireDetector:
             all_polygons = []
 
             # Image dimensions for relative area calculation
-            # result.orig_shape is (height, width)
             img_height, img_width = result.orig_shape
             img_area = img_height * img_width
 

@@ -56,7 +56,8 @@ class RemoteClient:
         """
         Registers a batch of images.
         """
-        logger.info(f"Registering {len(payload)} images...")
+        if len(payload) == 0:
+            return []
         headers = await self._get_headers()
         async with httpx.AsyncClient() as client:
             response = await client.post(
@@ -111,6 +112,8 @@ class RemoteClient:
         """
         Deletes images from the remote API.
         """
+        if len(imageIds) == 0:
+            return
         headers = await self._get_headers()
         async with httpx.AsyncClient() as client:
             response = await client.delete(
@@ -119,7 +122,7 @@ class RemoteClient:
                 headers=headers
             )
             response.raise_for_status()
-            return response.json()
+            return
 
 
 remote_client = RemoteClient()
