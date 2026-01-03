@@ -26,26 +26,23 @@ def get_images_to_sync() -> List[ImageCreationDto]:
 
     print(f"Scanning {base_path} for images...")
 
-    files_paths = list(base_path.rglob("*.jpg"))
+    jpg_files_paths = list(base_path.rglob("*.jpg"))
 
-    print(f"Found {len(files_paths)} images to process.")
+    print(f"Found {len(jpg_files_paths)} images to process.")
 
-    if len(files_paths) == 0:
+    if len(jpg_files_paths) == 0:
         return images_to_sync
 
-    tif_files_paths = [
-        Path(settings.RAW_IMAGES_DIR) / f"{file_path.stem}.tif"
-        for file_path in files_paths
-    ]
+    for jpg_file_path in tqdm(jpg_files_paths, desc="Processing images for sync"):
+        tif_file_path = Path(settings.RAW_IMAGES_DIR) / f"{jpg_file_path.stem}.tif"
 
-    for tif_file_path in tqdm(tif_files_paths, desc="Processing images for sync"):
         detection_result = detector.detect(images_paths=[tif_file_path.resolve()])[0]
 
         file_metadata = get_geotiff_metadata(image_path=tif_file_path)
 
         image = ImageCreationDto(
             url=f"{settings.REMOTE_IMAGES_SERVE_BASE_URL}/raw/{tif_file_path.stem}",
-            split=get_split_from_path(tif_file_path),
+            split=get_split_from_path(jpg_file_path),
             containsFire=detection_result["has_fire"],
             metadata=ImageMetadata(
                 localPath=str(tif_file_path),

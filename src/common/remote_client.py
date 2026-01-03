@@ -12,24 +12,37 @@ HttpHeaders = Dict[str, str]
 logger = logging.getLogger(__name__)
 
 class RemoteClient:
-    _CACHE_TTL_SECONDS = 300 # 5 minutes
+    _CACHE_TTL_SECONDS = 5 * 60 # 5 minutes
+    _AUTH_REFRESH_INTERVAL_SECONDS = 5 * 60 * 60 # 5 hours
 
     def __init__(self) -> None:
         self.base_url = settings.REMOTE_API_BASE_URL
-        self.auth_token: Optional[str] = None
+        self._auth_token: Optional[str] = None
+        self._last_auth_refresh_time: float = 0.0
         self._images_cache: Dict[str, (int, List[ImageDto])] = {}
 
     async def _get_headers(self, with_auth: bool = True) -> HttpHeaders:
-        if self.auth_token is None:
+        if self._auth_token is None:
             if with_auth:
-                await self.login()
+                self._auth_token = await self.login()
+                self._last_auth_refresh_time = time.time()
             else:
                 return {
                     "Content-Type": "application/json"
                 }
 
+        if not with_auth:
+            return {
+                "Content-Type": "application/json",
+            }
+
+        current_time = time.time()
+        if current_time - self._last_auth_refresh_time > self._AUTH_REFRESH_INTERVAL_SECONDS:
+            self._auth_token = await self.login()
+            self._last_auth_refresh_time = current_time
+
         return {
-            "Authorization": f"Bearer {self.auth_token}",
+            "Authorization": f"Bearer {self._auth_token}",
             "Content-Type": "application/json"
         }
 
@@ -49,8 +62,8 @@ class RemoteClient:
                 headers=headers
             )
             response.raise_for_status()
-            self.auth_token = response.json()["token"]
             logger.info("Logged in successfully!")
+            return response.json()["token"]
 
     async def register_images(self, payload: List[ImageCreationDto]) -> List[ImageDto]:
         """
