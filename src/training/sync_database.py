@@ -75,7 +75,7 @@ async def sync_images() -> None:
         for i in tqdm(chunks_range, desc="Clearing existing remote images in batches"):
             chunk = existing_images[i:i+chunk_size]
             try:
-                await remote_client.delete_images(imageIds=[image["id"] for image in chunk])
+                await remote_client.delete_images(image_ids=[image["id"] for image in chunk])
             except Exception as e:
                 errors.append(f"  - Error clearing batch n°{i // chunk_size + 1}: {e}")
 
@@ -104,6 +104,8 @@ async def sync_images() -> None:
             exit(1)
 
         print("Images registered successfully.")
+
+    await remote_client.close()
 
 if __name__ == "__main__":
     asyncio.run(sync_images())

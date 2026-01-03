@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import os
 import random
@@ -9,7 +8,7 @@ from src.detection.inference import detector
 
 logger = logging.getLogger(__name__)
 
-async def run_simulation_cycle() -> None:
+async def simulation_job() -> None:
     """
     Periodically fetches a random TEST image and triggers an alert.
     """
@@ -52,10 +51,3 @@ async def run_simulation_cycle() -> None:
 
     except Exception as e:
         logger.error(f"Simulation failed: {e}")
-
-
-def simulation_job() -> None:
-    """
-    Synchronous wrapper for APScheduler
-    """
-    asyncio.run(run_simulation_cycle())

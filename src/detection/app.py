@@ -1,35 +1,47 @@
+import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Literal, TypedDict
 
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
 
 from src.common.config import settings
+from src.common.remote_client import remote_client
 from src.detection.routers import detection_router, files_router
 from src.detection.simulation import simulation_job
 
-scheduler = BackgroundScheduler()
+
+RootResponse = TypedDict("RootResponse", {"message": str})
+HealthCheckResponse = TypedDict("HealthCheckResponse", {"status": Literal["UP"]})
+
+scheduler = AsyncIOScheduler()
+
+logging.basicConfig(
+    format="%(asctime)s [%(name)-30s] %(levelname)-8s %(message)s",
+    level=logging.INFO,
+    datefmt="%Y-%m-%d %H:%M:%S",
+    force=True
+)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
     scheduler.add_job(
         func=simulation_job,
+        name="Simulated Alert Generation",
         trigger="interval",
         seconds=settings.SIMULATION_INTERVAL_SECONDS
     )
     scheduler.start()
     yield
-    # Shutdown
     scheduler.shutdown()
+    await remote_client.close()
 
 app = FastAPI(title=settings.APP_NAME, lifespan=lifespan)
 
-RootResponse = TypedDict("RootResponse", {"message": str})
 @app.get("/")
 def root() -> RootResponse:
     return {"message": "Welcome to the Firepulse Detection Engine API"}
 
-HealthCheckResponse = TypedDict("HealthCheckResponse", {"status": Literal["UP"]})
 @app.get("/health")
 def health() -> HealthCheckResponse:
     return {"status": "UP"}
