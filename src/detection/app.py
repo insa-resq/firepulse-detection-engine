@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings("ignore", message=".*Could not initialize NNPACK.*")
+
 import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Literal, TypedDict
@@ -14,14 +17,14 @@ from src.detection.simulation import simulation_job
 RootResponse = TypedDict("RootResponse", {"message": str})
 HealthCheckResponse = TypedDict("HealthCheckResponse", {"status": Literal["UP"]})
 
-scheduler = AsyncIOScheduler()
-
 logging.basicConfig(
     format="%(asctime)s [%(name)-30s] %(levelname)-8s %(message)s",
     level=logging.INFO,
     datefmt="%Y-%m-%d %H:%M:%S",
     force=True
 )
+
+scheduler = AsyncIOScheduler()
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:

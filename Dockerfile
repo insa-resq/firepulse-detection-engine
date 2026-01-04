@@ -31,7 +31,6 @@ COPY --from=build /opt/venv /opt/venv
 
 ENV PATH="/opt/venv/bin:$PATH"
 ENV YOLO_CONFIG_DIR="/tmp"
-ENV USE_NNPACK=0
 
 COPY model/v4/weights/best.pt ./model/v4/weights/best.pt
 COPY src/common ./src/common
