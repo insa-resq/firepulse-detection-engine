@@ -13,7 +13,6 @@ dependencies = [
     "pydantic-settings==2.12.0",
     "python-dotenv==1.2.1",
     "rasterio==1.4.4",
-    "codecarbon==3.2.1",
 ]
 
 [project.optional-dependencies]
@@ -24,4 +23,7 @@ detection = [
 ]
 training = [
     "tqdm==4.67.1",
+]
+monitoring = [
+    "codecarbon==3.2.1",
 ]

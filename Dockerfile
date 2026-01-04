@@ -25,8 +25,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     gdal-bin && \
-    rm -rf /var/lib/apt/lists/* && \
-    chmod -R a+r /sys/class/powercap/*
+    rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /opt/venv /opt/venv
 
