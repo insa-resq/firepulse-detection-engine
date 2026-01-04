@@ -2,6 +2,7 @@ import glob
 import os
 from typing import Dict, Any
 
+from codecarbon import track_emissions
 from ultralytics import YOLO
 
 from src.common.config import settings
@@ -27,6 +28,7 @@ def get_new_version_name() -> str:
         return f"v{max(version_numbers) + 1}"
 
 
+@track_emissions()
 def train_model(version: str) -> Dict[str, Any]:
     model = YOLO(settings.BASE_MODEL)
     return model.train(
@@ -36,7 +38,7 @@ def train_model(version: str) -> Dict[str, Any]:
         imgsz=608, # First multiple of 32 greater than 595
         device=0,
         batch=8,
-        patience=10,
+        patience=5,
         save=True,
         project=settings.MODELS_DIR,
         name=version
