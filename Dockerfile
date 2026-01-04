@@ -36,4 +36,4 @@ COPY model/v4/weights/best.pt ./model/v4/weights/best.pt
 COPY src/common ./src/common
 COPY src/detection ./src/detection
 
-CMD ["uvicorn", "src.detection.app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["/bin/sh", "-c", "uvicorn src.detection.app:app --host 0.0.0.0 --port 8000 2>&1 | grep -v 'NNPACK'"]

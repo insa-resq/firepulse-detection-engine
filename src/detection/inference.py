@@ -1,6 +1,3 @@
-import warnings
-warnings.filterwarnings("ignore", message=".*Could not initialize NNPACK.*")
-
 import os
 import logging
 from typing import List, TypedDict, Optional
