@@ -1,6 +1,3 @@
-import warnings
-warnings.filterwarnings("ignore", message=".*Could not initialize NNPACK.*")
-
 import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Literal, TypedDict
