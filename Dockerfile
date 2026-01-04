@@ -26,7 +26,7 @@ RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     gdal-bin && \
     rm -rf /var/lib/apt/lists/* && \
-    sudo chmod -R a+r /sys/class/powercap/*
+    chmod -R a+r /sys/class/powercap/*
 
 COPY --from=build /opt/venv /opt/venv
 
@@ -34,9 +34,8 @@ ENV PATH="/opt/venv/bin:$PATH"
 ENV YOLO_CONFIG_DIR="/tmp"
 ENV USE_NNPACK=0
 
+COPY model/v4/weights/best.pt ./model/v4/weights/best.pt
 COPY src/common ./src/common
 COPY src/detection ./src/detection
-
-COPY model/v4/weights/best.pt ./model/v4/weights/best.pt
 
 CMD ["uvicorn", "src.detection.app:app", "--host", "0.0.0.0", "--port", "8000"]
