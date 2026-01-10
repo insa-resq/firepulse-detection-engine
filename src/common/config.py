@@ -29,7 +29,7 @@ class Settings(BaseSettings):
 
     CONFIDENCE_THRESHOLD: float = 0.5
 
-    SIMULATION_INTERVAL_SECONDS: int = 60
+    SIMULATION_INTERVAL_SECONDS: int = 6 * 60 * 60 # 6 hours
 
 
 settings = Settings()

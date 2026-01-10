@@ -19,8 +19,10 @@ async def simulation_job() -> None:
         )
 
         if not candidate_images:
-            logger.warning("No test images available for simulation.")
+            logger.warning("No images available for simulation.")
             return
+
+        logger.info(f"Found {len(candidate_images)} images for simulation.")
 
         selected_image: ImageDto = random.choice(candidate_images)
 
@@ -36,8 +38,11 @@ async def simulation_job() -> None:
             )
             return
 
+        # Get image name without extension
+        image_name = os.path.splitext(os.path.basename(local_path))[0]
+
         alert_payload = FireAlertCreationDto(
-            description=f"SIMULATION: Fire detected on image {selected_image["id"]}",
+            description=f"[SIMULATION] Fire detected on the test image {image_name}.",
             confidence=detection_result["confidence"],
             severity=detection_result["severity"],
             latitude=selected_image["metadata"]["latitude"],

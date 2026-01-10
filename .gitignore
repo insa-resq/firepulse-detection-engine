@@ -211,3 +211,5 @@ __marimo__/
 *.tif
 *.tiff
 .idea/*
+credentials.json
+.codecarbon.config
