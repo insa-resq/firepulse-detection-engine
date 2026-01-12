@@ -135,6 +135,7 @@ if __name__ == "__main__":
 
     errors = []
     index = 0
+    skipped_images_count = 0
 
     for tif_path in tqdm(raw_images, desc=f"Processing {len(raw_images)} files into {str(output_dir.absolute())}"):
         try:
@@ -147,13 +148,6 @@ if __name__ == "__main__":
 
             out_name = tif_path.stem
 
-            # Create and save the image
-            jpg_image = geotiff_to_jpg(image_path=tif_path)
-            cv2.imwrite(
-                str(output_dir / "images" / split / f"{out_name}.jpg"),
-                jpg_image
-            )
-
             metadata = get_geotiff_metadata(image_path=tif_path)
 
             # Generate Labels
@@ -161,6 +155,19 @@ if __name__ == "__main__":
             clean_mask = np.nan_to_num(raw_mask, nan=0.0)
             label_mask = clean_mask.astype(np.uint8)
             yolo_labels = create_yolo_label(label_mask, metadata["width"], metadata["height"])
+
+            if len(yolo_labels) == 0 and split == "train":
+                skipped_images_count += 1
+                index += 1
+                continue  # No labels to save
+            
+            # Create and save the image
+            jpg_image = geotiff_to_jpg(image_path=tif_path)
+
+            cv2.imwrite(
+                str(output_dir / "images" / split / f"{out_name}.jpg"),
+                jpg_image
+            )
 
             # Save Label
             label_out_path = output_dir / "labels" / split / f"{out_name}.txt"
@@ -174,6 +181,8 @@ if __name__ == "__main__":
         index += 1
 
     print("Dataset processed successfully.")
+    if skipped_images_count > 0:
+        print(f"Skipped {skipped_images_count} training images with no labels.")
 
     for error in errors:
         print(error)

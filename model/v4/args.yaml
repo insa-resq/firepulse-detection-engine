@@ -4,7 +4,7 @@ model: yolo11n-seg.pt
 data: src/training/data.yaml
 epochs: 100
 time: null
-patience: 10
+patience: 5
 batch: 8
 imgsz: 608
 save: true
@@ -103,4 +103,4 @@ auto_augment: randaugment
 erasing: 0.4
 cfg: null
 tracker: botsort.yaml
-save_dir: /home/ashborn/Dev/INSA/firepulse-detection-engine/model/v4
+save_dir: C:\Users\mateo\Documents\INSA\5A\Projet Integrateur\firepulse-detection-engine\model\v4

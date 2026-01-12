@@ -1,12 +1,12 @@
-task: detect
+task: segment
 mode: train
-model: model/base/yolo11n.pt
+model: yolo11n-seg.pt
 data: src/training/data.yaml
-epochs: 30
+epochs: 100
 time: null
-patience: 10
+patience: 5
 batch: 8
-imgsz: 640
+imgsz: 608
 save: true
 save_period: -1
 cache: false
@@ -103,4 +103,4 @@ auto_augment: randaugment
 erasing: 0.4
 cfg: null
 tracker: botsort.yaml
-save_dir: /home/ashborn/Dev/INSA/firepulse-detection-engine/model/v2
+save_dir: C:\Users\mateo\Documents\INSA\5A\Projet Integrateur\firepulse-detection-engine\model\v2
