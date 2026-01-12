@@ -124,16 +124,16 @@ class FireDetector:
         2. Confidence: How sure is the model?
         """
         area_ratio = fire_area / img_area
-
-        if area_ratio > 0.05 and confidence > 0.7:
+        
+        if area_ratio > 0.0005 and confidence > 0.5:
             return FireSeverity.CRITICAL
 
-        if area_ratio > 0.02:
-            if confidence > 0.6:
+        if area_ratio > 0.0002:
+            if confidence > 0.4:
                 return FireSeverity.HIGH
             return FireSeverity.MEDIUM
 
-        if confidence > 0.8:
+        if confidence > 0.4:
             return FireSeverity.MEDIUM
 
         return FireSeverity.LOW

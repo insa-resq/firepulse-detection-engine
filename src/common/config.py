@@ -16,7 +16,7 @@ class Settings(BaseSettings):
 
     MODELS_DIR: str = "model"
     BASE_MODEL: str = "yolo11n-seg.pt"
-    BEST_MODEL_WEIGHTS_PATH: str = f"{MODELS_DIR}/v4/weights/best.pt"
+    BEST_MODEL_WEIGHTS_PATH: str = f"{MODELS_DIR}/v14/weights/best.pt"
 
     RAW_IMAGES_DIR: str = "data/raw"
     LIVE_IMAGES_DIR: str = "data/live"
@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     IMAGES_SERVE_BASE_PATH: str = "/files"
     REMOTE_IMAGES_SERVE_BASE_URL: str = os.getenv("REMOTE_IMAGES_SERVE_BASE_URL")
 
-    CONFIDENCE_THRESHOLD: float = 0.5
+    CONFIDENCE_THRESHOLD: float = 0.3
 
     SIMULATION_INTERVAL_SECONDS: int = 6 * 60 * 60 # 6 hours
 
