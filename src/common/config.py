@@ -16,7 +16,7 @@ class Settings(BaseSettings):
 
     MODELS_DIR: str = "model"
     BASE_MODEL: str = "yolo11n-seg.pt"
-    BEST_MODEL_WEIGHTS_PATH: str = f"{MODELS_DIR}/v14/weights/best.pt"
+    BEST_MODEL_WEIGHTS_PATH: str = f"{MODELS_DIR}/v15/weights/best.pt"
 
     RAW_IMAGES_DIR: str = "data/raw"
     LIVE_IMAGES_DIR: str = "data/live"

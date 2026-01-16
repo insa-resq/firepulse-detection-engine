@@ -32,7 +32,7 @@ COPY --from=build /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 ENV YOLO_CONFIG_DIR="/tmp"
 
-COPY model/v14/weights/best.pt ./model/v14/weights/best.pt
+COPY model/v15/weights/best.pt ./model/v15/weights/best.pt
 COPY src/common ./src/common
 COPY src/detection ./src/detection
 
